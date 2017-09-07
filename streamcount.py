@@ -1,4 +1,6 @@
 import httplib2
+import numpy as np
+import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup, SoupStrainer
 
 def getLinks(base, condition):
@@ -9,29 +11,55 @@ def getLinks(base, condition):
 
     for link in BeautifulSoup(response,"html.parser", parse_only=SoupStrainer('a')):
         if link.has_attr('href') and condition in link['href']:
-            links.append(base + link['href'].replace(' ','%20'))
+            links.append(link['href'].replace(' ','%20'))
 
     return links
 
 ## Build a list of streamers with log files availble
-def getStreamerList():
-    streamerlist = getLinks('https://overrustlelogs.net/','chatlog')
+def getStreamerList(base):
+    streamerlist = getLinks(base,'chatlog')
+    streamerlist = [base + i for i in streamerlist]
 
     return streamerlist
 
-## Count the number of days given streamer was active in the months
-## contained in 'monthlist'
-def countStreams(streamerlink):
+## Build list of link to logs for every active day in 
+## months contained in 'monthlist'
+def getDailyLinks(base, streamerlink):
     monthlist = ['May','June','July']
-    streamcount = 0
+    daylist = []
 
     for month in monthlist:
-        ###CONTINUE HERE!!!!
+        temp = getLinks(streamerlink,month)
+        if not temp:
+            continue   # skip this month if no link exists
+        monthlink = temp[0]
+        monthlink = base + monthlink
+        daylist += getLinks(monthlink,'-')
+        daylist = [base + i for i in daylist]
+        
+    return daylist
 
 def main():
-    streamerlist = getStreamerList()
-    print(streamerlist[0:10])
+    # Get all base links
+    base = 'https://overrustlelogs.net'
+    streamerlist = getStreamerList(base)
 
+    # Build histogram of number of days streamed
+    # in May, June, July
+    histogram = np.zeros((100,),dtype=np.int)    # 92 possible days
+    #count = len(getDailyLinks(base,streamerlist[5]))
+    #print(count)
+    for streamer in streamerlist:
+        print(streamer)
+        count = len(getDailyLinks(base,streamer))
+        print(count)
+        histogram[count] += 1
+
+    # Plot data
+    plt.bar(range(100),histogram)
+    plt.xlabel('Number of acitve days in May, June, and July')
+    plt.ylabel('Number of streamers')
+    plt.show()
 
 if __name__ == "__main__":
     main()
