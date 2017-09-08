@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup, SoupStrainer
 
+## Get a list of links on a webpage 'base' that contain 'condition'
 def getLinks(base, condition):
     http = httplib2.Http()
     status, response = http.request(base)
@@ -40,6 +41,7 @@ def getDailyLinks(base, streamerlink):
     return daylist
 
 def main():
+    output = open('streamCount.txt','w')
     # Get all base links
     base = 'https://overrustlelogs.net'
     streamerlist = getStreamerList(base)
@@ -55,11 +57,16 @@ def main():
         print(count)
         histogram[count] += 1
 
+        output.write(streamer + '\t' + str(count) + '\n')
+
+    output.close()
+
     # Plot data
     plt.bar(range(100),histogram)
     plt.xlabel('Number of acitve days in May, June, and July')
     plt.ylabel('Number of streamers')
     plt.show()
+
 
 if __name__ == "__main__":
     main()
