@@ -39,6 +39,26 @@ def getLogText(link):
     webpage = url.urlopen(req).read()
     return webpage
 
+## Make directory for log files to go in and return path
+def mkdir(streamer):
+    name = streamer[27:-10]     # Strip url base and chatlog suffix
+    path = 'logs/' + name
+    print(name)
+    if not os.path.exists(path):
+        os.makedirs(path)       # Make directory for streamer's logs if none exists
+
+    return path
+
+## Get and save logfiles
+def saveLogs(path, daylist):
+    for day in daylist:
+        log = getLogText(day + '.txt')
+        date = day[-10:]
+
+        outputfile = open(path +'/'+date+'.log','wb')
+        outputfile.write(log)
+        outputfile.close()
+
 def main():
     base = 'https://overrustlelogs.net'
     ## Build a list of streamers that were active everyday
@@ -52,22 +72,12 @@ def main():
             streamerlist.append(streamer)
 
     ## Make appropriate directories and save logs
-    for streamer in streamerlist[:1]:
-        name = streamer[27:-10]     # Strip url base and chatlog suffix
-        path = 'logs/' + name
-        print(streamer)
-        if not os.path.exists(path):
-            os.makedirs(path)       # Make director for streamer's logs if none exists
+    for streamer in streamerlist:
+        path = mkdir(streamer)
 
         daylist = getDailyLink(base, streamer)
         ## Get log for each day and save to streamer's directory
-        for day in daylist:
-            log = getLogText(day + '.txt')
-            date = day[-10:]
-    
-            outputfile = open(path+'/'+date+'.log','wb')
-            outputfile.write(log)
-            outputfile.close()
+        saveLogs(path, daylist)
 
 if __name__ == "__main__":
     main()
