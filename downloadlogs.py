@@ -28,7 +28,8 @@ def getDailyLink(base, streamer):
         monthlink = temp[0]
         monthlink = base + monthlink
         daylist += getLinks(monthlink,'-')
-        daylist = [base + i for i in daylist]
+        
+    daylist = [base + i for i in daylist]
 
     return daylist
 
@@ -51,16 +52,22 @@ def main():
             streamerlist.append(streamer)
 
     ## Make appropriate directories and save logs
-    for streamer in streamerlist[:5]:
+    for streamer in streamerlist[:1]:
         name = streamer[27:-10]     # Strip url base and chatlog suffix
-        path = '/logs/' + name
+        path = 'logs/' + name
         print(streamer)
         if not os.path.exists(path):
             os.makedirs(path)       # Make director for streamer's logs if none exists
 
         daylist = getDailyLink(base, streamer)
-
-    print(daylist)
+        ## Get log for each day and save to streamer's directory
+        for day in daylist:
+            log = getLogText(day + '.txt')
+            date = day[-10:]
+    
+            outputfile = open(path+'/'+date+'.log','wb')
+            outputfile.write(log)
+            outputfile.close()
 
 if __name__ == "__main__":
     main()
