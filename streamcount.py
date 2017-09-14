@@ -36,7 +36,8 @@ def getDailyLinks(base, streamerlink):
         monthlink = temp[0]
         monthlink = base + monthlink
         daylist += getLinks(monthlink,'-')
-        daylist = [base + i for i in daylist]
+    
+    daylist = [base + i for i in daylist]
         
     return daylist
 
