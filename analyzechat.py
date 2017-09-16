@@ -3,6 +3,23 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 from os import listdir
 from os.path import join, basename
 import numpy as np
+from multiprocessing import Pool
+from functools import partial
+
+## Check if this streamer has already been
+## analyzed in a previous run of program
+def checkProgress(streamer):
+    if streamer in listdir('scores'):
+        scorefile = join('scores',streamer)
+        with open(scorefile,'r') as f:
+            lastline = f.readlines()[-1]
+
+        lastcompletedlog = lastline.split()[0]
+        if lastcompletedlog == '2017-07-31.log':
+            lastcompletedlog = 'done'
+        return lastcompletedlog
+    else:
+        return ''
 
 ## Build a list of logfiles saved locally
 def getLogList():
@@ -11,6 +28,7 @@ def getLogList():
     for streamer in listdir('logs'):
         streamerpath = join('logs',streamer)
         loglist[streamer] = [join(streamerpath,log) for log in listdir(streamerpath)]
+        loglist[streamer].sort()
 
     return loglist
 
@@ -84,27 +102,42 @@ def formatOutput(logpath,negres,neures,posres,compres):
     output += '\t' + str(compres[0]) + ' ' + str(compres[1]) + '\n'
     return output
 
-def main():
-    logList = getLogList()
+def analyzeStreamer(streamer,loglist):
+    print('Beginning '+streamer)
+    lastcompletedlog = checkProgress(streamer)
 
-    #for streamer in logList.keys():
-    # temporary for testing - begin
-    list = ['Day9tv']
-    for streamer in list:
-    # temporary for testing - end
-        print(streamer)
+    if lastcompletedlog == 'done':
+        return
+
+    elif lastcompletedlog == '':
         scoresfile = open(join('scores',streamer),'w')
-        logpaths = logList[streamer]
+        index = 0
+    
+    else:
+        scoresfile = open(join('scores',streamer),'a')
+        index = loglist[streamer].index(join('logs',streamer,lastcompletedlog)) + 1
 
-        for logpath in logpaths:
-                print(basename(logpath))
-                rawmessagelist = loadLog(logpath)
-                timestamplist, usernamelist, messagelist = separateMessages(rawmessagelist)
+    logpaths = loglist[streamer]
+    for logpath in logpaths[index:]:
+        print(basename(logpath))
+        rawmessagelist = loadLog(logpath)
+        timestamplist, usernamelist, messagelist = separateMessages(rawmessagelist)
 
-                negativeresults, neutralresults, positiveresults, compoundresults = analyzeMessages(messagelist)
-                scoresfile.write(formatOutput(logpath,negativeresults,neutralresults,positiveresults,compoundresults))
+        negativeresults, neutralresults, positiveresults, compoundresults = analyzeMessages(messagelist)
+        scoresfile.write(formatOutput(logpath,negativeresults,neutralresults,positiveresults,compoundresults))
 
-        scoresfile.close()
+    scoresfile.close()
+    return
+
+def main():
+    p = Pool(4)
+    logList = getLogList()
+    
+    # Evaluate analyzeStreamer using Pool of 4 processors.
+    p.map(partial(analyzeStreamer, loglist=logList),list(logList.keys()))
+
+#    for streamer in loglist.keys()
+#        analyzeStreamer(streamer,loglist)
 
 if __name__ == '__main__':
     main()
