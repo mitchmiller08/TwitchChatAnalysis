@@ -1,7 +1,7 @@
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 from os import listdir
-from os.path import join, basename
+from os.path import join, basename, getsize
 import numpy as np
 from multiprocessing import Pool
 from functools import partial
@@ -11,6 +11,8 @@ from functools import partial
 def checkProgress(streamer):
     if streamer in listdir('scores'):
         scorefile = join('scores',streamer)
+        if getsize(scorefile) == 0:
+            return ''
         with open(scorefile,'r') as f:
             lastline = f.readlines()[-1]
 
@@ -148,6 +150,5 @@ if __name__ == '__main__':
 ##          score gives neg, neu, pos, and compound score
 ##          avgpos = sum(score['pos'] for score in scoreslist) / len(scoreslist
 
-## TODO:    Sort log files before analysis 
-##          Get user / subscriber count
+## TODO:    Get user / subscriber count
 ##          Calculate message frequency from timestamps
